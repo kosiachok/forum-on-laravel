@@ -5,19 +5,25 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
 
-        $request->validate([
-            'name' => 'required|unique:users|max:255',
-            'email' => 'required',
-            'password' => 'required'
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'unique:users', 'max:255'],
+            'email' => ['required'],
+            'password' => ['required'],
         ]);
+
+        if($validator->fails()){
+            return response()->json($validator->messages(), 200);
+        }
 
         $user = new User;
         $user->name = request('name');
@@ -91,12 +97,27 @@ class AuthController extends Controller
         $accessToken = auth()->user()->token();
 
         $refreshToken = DB::table('oauth_refresh_tokens')
-            ->where('access_token_id', $accessToken->id)
-            ->update([
-                'revoked' => true
-            ]);
+            ->where('access_token_id', $accessToken->id);
 
-        $accessToken->revoke();
+        $accessToken->delete();
+        $refreshToken->delete();
+
+        return response()->json(['status' => 200]);
+    }
+
+    public function delete(Request $request)
+    {
+
+        $user = User::whereEmail(request('username'))->first();
+        $user->delete();
+
+        $accessToken = auth()->user()->token();
+
+        $refreshToken = DB::table('oauth_refresh_tokens')
+            ->where('access_token_id', $accessToken->id);
+
+        $accessToken->delete();
+        $refreshToken->delete();
 
         return response()->json(['status' => 200]);
     }
