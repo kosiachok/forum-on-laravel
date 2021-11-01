@@ -22,4 +22,7 @@ Route::post('auth/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete', [AuthController::class, 'delete']);
+    Route::get('auth/route_for_admins', function () {
+        return response()->json(['status' => 200]);
+    })->middleware(['auth:api', 'scope:admin']);
 });

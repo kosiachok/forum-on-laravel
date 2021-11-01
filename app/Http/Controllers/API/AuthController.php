@@ -14,10 +14,9 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'unique:users', 'max:255'],
-            'email' => ['required'],
+            'email' => ['required', 'unique:users'],
             'password' => ['required'],
         ]);
 
@@ -36,7 +35,6 @@ class AuthController extends Controller
 
     public function login()
     {
-
         $user = User::whereEmail(request('username'))->first();
 
         if (!$user) {
@@ -51,6 +49,17 @@ class AuthController extends Controller
                 'message' => 'Wrong email or password',
                 'status' => 422
             ], 422);
+        }
+
+        $accessTokenArray = DB::select('select * from oauth_access_tokens where user_id = ?', [$user->id]);
+        if ($accessTokenArray != []) {
+            $accessToken = $accessTokenArray[0];
+            if ($accessToken) {
+                $refreshToken = DB::table('oauth_refresh_tokens')
+                    ->where('access_token_id', $accessToken->id);
+                $refreshToken->delete();
+            }
+            DB::delete('delete from oauth_access_tokens where user_id = ?', [$user->id]);
         }
 
         $client = DB::table('oauth_clients')
@@ -70,6 +79,7 @@ class AuthController extends Controller
             'client_secret' => $client->secret,
             'username' => request('username'),
             'password' => request('password'),
+            'scope' => $user->scope,
         ];
 
         $request = Request::create('/oauth/token', 'POST', $data);
@@ -107,7 +117,6 @@ class AuthController extends Controller
 
     public function delete(Request $request)
     {
-
         $user = User::whereEmail(request('username'))->first();
         $user->delete();
 
