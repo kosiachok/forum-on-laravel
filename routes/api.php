@@ -15,14 +15,34 @@ use Illuminate\Support\Facades\Route;
 */
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\AdminsController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:api')->group(function () {
+
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete', [AuthController::class, 'delete']);
-    Route::get('auth/route_for_admins', function () {
-        return response()->json(['status' => 200]);
-    })->middleware(['auth:api', 'scope:admin']);
+
+    Route::get('auth/check', function () {
+        return response()->json([
+            'status' => 200,
+        ], 200);
+    });
+
+    Route::middleware(['auth:api', 'scope:admin,supervisor'])->group(function () {
+
+        Route::get('admin-affairs/get-users-list', [AdminsController::class, 'getUsersList']);
+        Route::post('admin-affairs/ban-user', [AdminsController::class, 'banUser']);
+
+    });
+
+    Route::middleware(['auth:api', 'scope:supervisor'])->group(function () {
+
+        Route::post('admin-affairs/switch-role', [AdminsController::class, 'switchRole']);
+        Route::post('admin-affairs/change-supervisor', [AdminsController::class, 'changeSuperVisor']);
+
+    });
+
 });

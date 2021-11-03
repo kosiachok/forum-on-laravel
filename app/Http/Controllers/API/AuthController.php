@@ -14,6 +14,13 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        if (DB::select('select * from banned_emails where email = ?', [request('email')]) != []) {
+            return response()->json([
+                'message' => 'You are banned!',
+                'status' => 403
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'unique:users', 'max:255'],
             'email' => ['required', 'unique:users'],
@@ -52,15 +59,10 @@ class AuthController extends Controller
         }
 
         $accessTokenArray = DB::select('select * from oauth_access_tokens where user_id = ?', [$user->id]);
-        if ($accessTokenArray != []) {
-            $accessToken = $accessTokenArray[0];
-            if ($accessToken) {
-                $refreshToken = DB::table('oauth_refresh_tokens')
-                    ->where('access_token_id', $accessToken->id);
-                $refreshToken->delete();
-            }
-            DB::delete('delete from oauth_access_tokens where user_id = ?', [$user->id]);
+        foreach ($accessTokenArray as $accessToken) {
+            DB::delete('delete from oauth_refresh_tokens where access_token_id = ?', [$accessToken->id]);
         }
+        DB::delete('delete from oauth_access_tokens where user_id = ?', [$user->id]);
 
         $client = DB::table('oauth_clients')
             ->where('password_client', true)
@@ -115,18 +117,25 @@ class AuthController extends Controller
         return response()->json(['status' => 200]);
     }
 
-    public function delete(Request $request)
+    public function delete(int $id = null)
     {
-        $user = User::whereEmail(request('username'))->first();
-        $user->delete();
+        if ($id == null) {
+            $user = auth()->user();
+            $accessToken = auth()->user()->token();
+            $refreshToken = DB::table('oauth_refresh_tokens')
+                ->where('access_token_id', $accessToken->id);
+            $accessToken->delete();
+            $refreshToken->delete();
+            $user->delete();
+            return response()->json(['status' => 200]);
+        }
 
-        $accessToken = auth()->user()->token();
-
-        $refreshToken = DB::table('oauth_refresh_tokens')
-            ->where('access_token_id', $accessToken->id);
-
-        $accessToken->delete();
-        $refreshToken->delete();
+        DB::delete('delete from users where id = ?', [$id]);
+        $accessTokenArray = DB::select('select * from oauth_access_tokens where user_id = ?', [$id]);
+        foreach ($accessTokenArray as $accessToken) {
+            DB::delete('delete from oauth_refresh_tokens where access_token_id = ?', [$accessToken->id]);
+        }
+        DB::delete('delete from oauth_access_tokens where user_id = ?', [$id]);
 
         return response()->json(['status' => 200]);
     }
