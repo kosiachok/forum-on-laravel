@@ -13,7 +13,6 @@ class AdminsController extends Controller
 {
     public function getUsersList() {
         $usersArray = DB::select('select * from users', []);
-
         return response()->json([
             'usersList' => $usersArray,
             'status' => 200,
@@ -90,7 +89,13 @@ class AdminsController extends Controller
         return response()->json([
             'status' => 200,
         ]);
+    }
+
+    public function  deleteComment(Request $request) {
 
     }
 
+    public function  deleteThread(Request $request) {
+
+    }
 }
