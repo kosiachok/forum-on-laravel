@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -35,6 +36,11 @@ class AuthController extends Controller
         $user->name = request('name');
         $user->email = request('email');
         $user->password = Hash::make(request('password'));
+        $user->avatar_path = null;
+        $user->save();
+
+        $user = User::firstWhere('email', request('email'));
+        $user->avatar_path = 'public/avatar/'.strval($user->id).'.jpg';
         $user->save();
 
         return response()->json(['status' => 201]);
@@ -100,6 +106,7 @@ class AuthController extends Controller
         return response()->json([
             'token' => $data->access_token,
             'user' => $user,
+            'avatar' => base64_encode(Storage::get($user->avatar_path)),
             'status' => 200
         ]);
     }
@@ -138,5 +145,46 @@ class AuthController extends Controller
         DB::delete('delete from oauth_access_tokens where user_id = ?', [$id]);
 
         return response()->json(['status' => 200]);
+    }
+
+    public function uploadAvatar(Request $request)
+    {
+        if (!$request->hasFile('avatar')) {
+            return response()->json([
+                'message' => 'No image in request!',
+                'status' => 400,
+            ], 400);
+        }
+
+        if (!$request->file('avatar')->isValid()) {
+            return response()->json([
+                'message' => 'File is not valid!',
+                'status' => 400,
+            ], 400);
+        }
+
+        $request->file('avatar')->storeAs(
+            'public/avatars', strval($request->user()->id).'.jpg'
+        );
+
+        return response()->json([
+            'status' => 201,
+        ]);
+    }
+
+    public function deleteAvatar(Request $request)
+    {
+        if (Storage::disk('public')->missing('avatars/'.strval($request->user()->id).'.jpg')) {
+            return response()->json([
+                'message' => 'Nothing to delete!',
+                'status' => 400,
+
+            ], 400);
+        }
+
+        Storage::delete('public/avatars/'.strval($request->user()->id).'.jpg');
+        return response()->json([
+            'status' => 200,
+        ], 200);
     }
 }

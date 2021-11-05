@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddScopeFieldToUsersTable extends Migration
+class AddAvatarpathToUsersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AddScopeFieldToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('scope')->nullable();;
+            $table->string('avatar_path')->nullable();;
         });
     }
 
@@ -26,7 +26,7 @@ class AddScopeFieldToUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('scope');
+            $table->dropColumn('avatar_path');
         });
     }
 }

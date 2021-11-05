@@ -24,6 +24,8 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete', [AuthController::class, 'delete']);
+    Route::post('auth/upload-avatar', [AuthController::class, 'uploadAvatar']);
+    Route::delete('auth/delete-avatar', [AuthController::class, 'deleteAvatar']);
 
     Route::get('auth/check', function () {
         return response()->json([
