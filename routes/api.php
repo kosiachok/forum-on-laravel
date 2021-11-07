@@ -26,16 +26,16 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete', [AuthController::class, 'delete']);
-    Route::post('auth/upload-avatar', [AuthController::class, 'uploadAvatar']);
+    Route::put('auth/upload-avatar', [AuthController::class, 'uploadAvatar']);
     Route::delete('auth/delete-avatar', [AuthController::class, 'deleteAvatar']);
 
     Route::post('content/create-comment', [CommentController::class, 'create']);
     Route::put('content/update-comment', [CommentController::class, 'update']);
-    Route::delete('content/delete-comment', [CommentController::class, 'delete']);
+    Route::delete('content/{comment_id}/delete-comment', [CommentController::class, 'delete']);
 
     Route::post('content/create-thread', [ThreadController::class, 'create']);
     Route::put('content/update-thread', [ThreadController::class, 'update']);
-    Route::delete('content/delete-thread', [ThreadController::class, 'delete']);
+    Route::delete('content/{thread_id}/delete-thread', [ThreadController::class, 'delete']);
 
     Route::get('auth/check', function () {
         return response()->json([
@@ -47,8 +47,8 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('admin-affairs/get-users-list', [AdminsController::class, 'getUsersList']);
         Route::post('admin-affairs/ban-user', [AdminsController::class, 'banUser']);
-        Route::delete('content/delete-user-comment', [AdminsController::class, 'deleteComment']);
-        Route::delete('content/delete-user-thread', [AdminsController::class, 'deleteThread']);
+        Route::delete('content/{comment_id}/delete-user-comment', [AdminsController::class, 'deleteComment']);
+        Route::delete('content/{thread_id}/delete-user-thread', [AdminsController::class, 'deleteThread']);
 
     });
 
@@ -59,6 +59,5 @@ Route::middleware('auth:api')->group(function () {
 
 });
 
-Route::get('content/get-comment', [CommentController::class, 'read']);
-Route::get('content/get-comment', [ThreadController::class, 'read']);
-
+Route::get('content/{thread_id}/get-comments', [CommentController::class, 'read']);
+Route::get('content/get-thread', [ThreadController::class, 'read']);

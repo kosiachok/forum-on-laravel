@@ -4,10 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\BannedEmail;
+use App\Models\Comment;
+use App\Models\Thread;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\API\AuthController;
+use Illuminate\Support\Facades\Validator;
+
 
 class AdminsController extends Controller
 {
@@ -31,25 +35,23 @@ class AdminsController extends Controller
         if ($usersArray == []) {
             return response()->json([
                 'message' => 'There is no user with id='.strval($userId),
-                'status' => 422,
-            ], 422);
+                'status' => 400,
+            ], 400);
         }
 
         $user = $usersArray[0];
         if ($user->scope == 'admin') {
             DB::update('UPDATE users SET scope = "" WHERE id = ?', [$userId]);
+            $this->logoutUser($userId);
             return response()->json([
                 'status' => 200,
-            ], 200);
+            ]);
         }
         DB::update('UPDATE users SET scope = "admin" WHERE id = ?', [$userId]);
-
         $this->logoutUser($userId);
-
         return response()->json([
             'status' => 200,
-        ], 200);
-
+        ]);
     }
 
     public function changeSupervisor() {
@@ -60,8 +62,8 @@ class AdminsController extends Controller
         if ($usersArray == []) {
             return response()->json([
                 'message' => 'There is no user with id='.strval($userId),
-                'status' => 422,
-            ], 422);
+                'status' => 400,
+            ], 400);
         }
 
         DB::update('UPDATE users SET scope = "supervisor" WHERE id = ?', [$userId]);
@@ -74,13 +76,18 @@ class AdminsController extends Controller
 
         return response()->json([
             'status' => 200,
-        ], 200);
+        ]);
 
     }
 
     public function banUser() {
 
         $user = User::find(request('user_id'));
+        if ($user == null)
+            return response()->json([
+                'message' => 'There is no user with id='.strval(request('user_id')),
+                'status' => 400,
+            ], 400);
         $email = new BannedEmail();
         $email->email = $user->email;
         $email->save();
@@ -91,11 +98,28 @@ class AdminsController extends Controller
         ]);
     }
 
-    public function  deleteComment(Request $request) {
-
+    public function  deleteComment($comment_id)
+    {
+        $comment = Comment::find($comment_id);
+        if ($comment == null)
+            return response()->json([
+                'message' => 'No comment with id = '.strval($comment_id),
+                'status' => 400,
+            ],400);
+        $comment->delete();
+        return response()->json(['status' => 200]);
     }
 
-    public function  deleteThread(Request $request) {
-
+    public function  deleteThread($thread_id)
+    {
+        $thread = Thread::find($thread_id);
+        if ($thread == null)
+            return response()->json([
+                'message' => 'No thread with id = ' . strval($thread_id),
+                'status' => 400,
+            ], 400);
+        $thread->delete();
+        DB::delete('delete from comments where thread_id = ?', [$thread_id]);
+        return response()->json(['status' => 200]);
     }
 }
