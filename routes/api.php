@@ -19,14 +19,14 @@ use App\Http\Controllers\API\AdminsController;
 use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\ThreadController;
 
-Route::post('auth/register', [AuthController::class, 'register']);
-Route::post('auth/login', [AuthController::class, 'login']);
+Route::post('auth/register', [AuthController::class, 'register'])->middleware('invert.passport');
+Route::post('auth/login', [AuthController::class, 'login'])->middleware('invert.passport');
 
 Route::middleware('auth:api')->group(function () {
 
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete', [AuthController::class, 'delete']);
-    Route::put('auth/upload-avatar', [AuthController::class, 'uploadAvatar']);
+    Route::post('auth/upload-avatar', [AuthController::class, 'uploadAvatar']);
     Route::delete('auth/delete-avatar', [AuthController::class, 'deleteAvatar']);
 
     Route::post('content/create-comment', [CommentController::class, 'create']);
@@ -36,12 +36,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('content/create-thread', [ThreadController::class, 'create']);
     Route::put('content/update-thread', [ThreadController::class, 'update']);
     Route::delete('content/{thread_id}/delete-thread', [ThreadController::class, 'delete']);
-
-    Route::get('auth/check', function () {
-        return response()->json([
-            'status' => 200,
-        ], 200);
-    });
 
     Route::middleware(['auth:api', 'scope:admin,supervisor'])->group(function () {
 
@@ -60,4 +54,4 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::get('content/{thread_id}/get-comments', [CommentController::class, 'read']);
-Route::get('content/get-thread', [ThreadController::class, 'read']);
+Route::get('content/get-threads', [ThreadController::class, 'read']);

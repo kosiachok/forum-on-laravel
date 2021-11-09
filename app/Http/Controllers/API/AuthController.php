@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -41,7 +42,7 @@ class AuthController extends Controller
         return response()->json(['status' => 201]);
     }
 
-    public function login()
+    public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'username' => ['required'],
@@ -51,16 +52,16 @@ class AuthController extends Controller
             return response()->json($validator->messages(), 400);
         }
 
-        $user = User::whereEmail(request('username'))->first();
+        $user = User::whereEmail($request->input('username'))->first();
 
         if (!$user) {
             return response()->json([
-                'message' => 'No user with email '.request('username'),
+                'message' => 'No user with email '.$request->input('username'),
                 'status' => 422
             ], 422);
         }
 
-        if (!Hash::check(request('password'), $user->password)) {
+        if (!Hash::check($request->input('password'), $user->password)) {
             return response()->json([
                 'message' => 'Wrong email or password',
                 'status' => 422
@@ -125,14 +126,7 @@ class AuthController extends Controller
     public function delete(int $id = null)
     {
         if ($id == null) {
-            $user = auth()->user();
-            $accessToken = auth()->user()->token();
-            $refreshToken = DB::table('oauth_refresh_tokens')
-                ->where('access_token_id', $accessToken->id);
-            $accessToken->delete();
-            $refreshToken->delete();
-            $user->delete();
-            return response()->json(['status' => 200]);
+            $id = auth()->id();
         }
         DB::delete('delete from users where id = ?', [$id]);
         $accessTokenArray = DB::select('select * from oauth_access_tokens where user_id = ?', [$id]);
@@ -145,6 +139,8 @@ class AuthController extends Controller
 
     public function uploadAvatar(Request $request)
     {
+
+        dd($request);
         if (!$request->hasFile('avatar')) {
             return response()->json([
                 'message' => 'No image in request!',
@@ -180,6 +176,9 @@ class AuthController extends Controller
             ], 400);
         }
         Storage::delete('public/avatars/'.strval(auth()->id()).'.jpg');
+        $user = User::find(auth()->id());
+        $user->avatar_path = 'public/avatars/default.jpg';
+        $user->save();
         return response()->json([
             'status' => 200,
         ]);

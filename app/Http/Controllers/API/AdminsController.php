@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Validator;
 class AdminsController extends Controller
 {
     public function getUsersList() {
-        $usersArray = DB::select('select * from users', []);
+        $usersArray = User::all();
         return response()->json([
             'usersList' => $usersArray,
             'status' => 200,
