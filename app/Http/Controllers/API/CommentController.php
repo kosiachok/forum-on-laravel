@@ -50,18 +50,7 @@ class CommentController extends Controller
 
     public function read($thread_id) {
 
-        $commentsArray = Comment::where('thread_id', $thread_id)->get();
-
-        foreach ($commentsArray as $comment) {
-            $user = User::find($comment->user_id);
-            unset($user->id);
-            $comment['user'] = $user;
-            $comment['users_avatar'] = null;
-            if (Storage::disk('public')->exists($user->avatar_path)) {
-                $comment['users_avatar'] = base64_encode(Storage::get($user->avatar_path));
-            }
-        }
-
+        $pic_array = [];
         $thread = Thread::find($thread_id);
         if ($thread == null)
             return response()->json([
@@ -69,13 +58,20 @@ class CommentController extends Controller
                 'status' => 400,
             ],400);
         $user = User::find($thread->user_id);
-        unset($user->id);
         $thread['user'] = $user;
-        $thread['users_avatar'] = base64_encode(Storage::get($user->avatar_path));
+        $pic_array[$user->id] = base64_encode(Storage::get($user->avatar_path));
 
+        $commentsArray = Comment::where('thread_id', $thread_id)->get();
+        foreach ($commentsArray as $comment) {
+            $user = User::find($comment->user_id);
+            $comment['user'] = $user;
+            if (!array_key_exists($user->id, $pic_array))
+                $pic_array[$user->id] = base64_encode(Storage::get($user->avatar_path));
+        }
         return response()->json([
             'thread' => $thread,
             'commentsArray' => $commentsArray,
+            'pic_array' => $pic_array,
             'status' => 200,
         ]);
     }
@@ -93,7 +89,7 @@ class CommentController extends Controller
         $comment = Comment::find(request('comment_id'));
         if ($comment == null)
             return response()->json([
-                'message' => 'No comment with id = '.strval($comment_id),
+                'message' => 'No comment with id = '.strval(request('comment_id')),
                 'status' => 400,
             ],400);
         if ($comment->user_id != Auth::id()) {

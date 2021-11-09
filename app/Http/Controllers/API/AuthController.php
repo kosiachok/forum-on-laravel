@@ -139,8 +139,6 @@ class AuthController extends Controller
 
     public function uploadAvatar(Request $request)
     {
-
-        dd($request);
         if (!$request->hasFile('avatar')) {
             return response()->json([
                 'message' => 'No image in request!',
@@ -162,7 +160,7 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json([
-            'avatar' => base64_encode(Storage::get($request->user()->id->avatar_path)),
+            'avatar' => base64_encode(Storage::get($request->user()->avatar_path)),
             'status' => 201
         ], 201);
     }

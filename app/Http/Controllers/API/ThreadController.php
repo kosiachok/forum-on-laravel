@@ -38,7 +38,6 @@ class ThreadController extends Controller
             'threadsArray' => $threadsArray,
             'status' => 200,
         ]);
-
     }
 
     public function update(Request $request) {
@@ -54,7 +53,7 @@ class ThreadController extends Controller
         $thread = Thread::find(request('thread_id'));
         if ($thread == null)
             return response()->json([
-                'message' => 'No thread with id = '.strval($thread_id),
+                'message' => 'No thread with id = '.strval(request('thread_id')),
                 'status' => 400,
             ],400);
 
