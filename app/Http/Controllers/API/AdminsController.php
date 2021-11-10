@@ -24,7 +24,11 @@ class AdminsController extends Controller
     }
 
     public function logoutUser(int $id) {
-        DB::update('UPDATE oauth_access_tokens SET revoked = 1 WHERE user_id = ?', [$id]);
+        $accessTokenArray = DB::select('select * from oauth_access_tokens where user_id = ?', [$id]);
+        foreach ($accessTokenArray as $accessToken) {
+            DB::delete('delete from oauth_refresh_tokens where access_token_id = ?', [$accessToken->id]);
+        }
+        DB::delete('delete from oauth_access_tokens where user_id = ?', [$id]);
     }
 
     public function switchRole() {
