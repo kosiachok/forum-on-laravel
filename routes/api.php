@@ -22,6 +22,13 @@ use App\Http\Controllers\API\ThreadController;
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('invert.passport');
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('invert.passport');
 
+Route::get('auth/unauthorized-error', function () {
+    return response()->json([
+        'message' => 'Laravel Passport: Unauthorized!',
+        'status' => 403,
+    ],403);
+})->name('unauthorized-error');
+
 Route::middleware('auth:api')->group(function () {
 
     Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -37,7 +44,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('content/update-thread', [ThreadController::class, 'update']);
     Route::delete('content/{thread_id}/delete-thread', [ThreadController::class, 'delete']);
 
-    Route::middleware(['auth:api', 'scope:admin,supervisor'])->group(function () {
+    Route::middleware(['scope:admin,supervisor'])->group(function () {
 
         Route::get('admin-affairs/get-users-list', [AdminsController::class, 'getUsersList']);
         Route::post('admin-affairs/ban-user', [AdminsController::class, 'banUser']);
@@ -46,7 +53,7 @@ Route::middleware('auth:api')->group(function () {
 
     });
 
-    Route::middleware(['auth:api', 'scope:supervisor'])->group(function () {
+    Route::middleware(['scope:supervisor'])->group(function () {
         Route::post('admin-affairs/switch-role', [AdminsController::class, 'switchRole']);
         Route::post('admin-affairs/change-supervisor', [AdminsController::class, 'changeSuperVisor']);
     });

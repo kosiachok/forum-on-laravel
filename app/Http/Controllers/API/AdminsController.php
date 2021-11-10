@@ -80,7 +80,7 @@ class AdminsController extends Controller
 
     }
 
-    public function banUser() {
+    public function banUser(Request $request) {
 
         $user = User::find(request('user_id'));
         if ($user == null)
@@ -88,6 +88,12 @@ class AdminsController extends Controller
                 'message' => 'There is no user with id='.strval(request('user_id')),
                 'status' => 400,
             ], 400);
+        if (!$request->user()->tokenCan('supervisor') && ($user->scope == 'admin' || $user->scope == 'supervisor')) {
+            return response()->json([
+                'message' => 'Access denied! Insufficient rights!',
+                'status' => 403,
+            ], 403);
+        }
         $email = new BannedEmail();
         $email->email = $user->email;
         $email->save();
