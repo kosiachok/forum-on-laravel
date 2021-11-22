@@ -100,7 +100,6 @@ class AuthController extends Controller
         }
 
         $data = json_decode($response->getContent());
-        unset($user->id);
 
         return response()->json([
             'token' => $data->access_token,
